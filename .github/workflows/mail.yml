@@ -20,10 +20,32 @@ jobs:
         run: |
           if [[ "${{ github.event_name }}" == "release" ]]; then
             echo "subject=🚀 New Release: ${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
-            echo "body=A new release was published.   📦 Tag: ${{ github.event.release.tag_name }}    📝 Name: ${{ github.event.release.name }}   🔗 URL: ${{ github.event.release.html_url }}    🧾 Notes:\n${{ github.event.release.body }}" >> $GITHUB_OUTPUT
+
+            body=$(cat <<EOF
+A new release was published.
+
+📦 Tag: ${{ github.event.release.tag_name }}
+📝 Name: ${{ github.event.release.name }}
+👤 Published by: ${{ github.actor }}
+🔗 URL: ${{ github.event.release.html_url }}
+
+🧾 Notes:
+${{ github.event.release.body }}
+EOF
+)
+            echo "body=$body" >> $GITHUB_OUTPUT
+
           elif [[ "${{ github.event_name }}" == "push" ]]; then
             echo "subject=📌 New Push to '${{ github.ref_name }}'" >> $GITHUB_OUTPUT
-            echo "body=New commits were pushed to '${{ github.ref_name }}'     🔗 Compare: https://github.com/${{ github.repository }}/compare/${{ github.event.before }}...${{ github.sha }}" >> $GITHUB_OUTPUT
+
+            body=$(cat <<EOF
+New commits were pushed to '${{ github.ref_name }}'.
+
+👤 Pushed by: ${{ github.actor }}
+🔗 Compare URL: https://github.com/${{ github.repository }}/compare/${{ github.event.before }}...${{ github.sha }}
+EOF
+)
+            echo "body=$body" >> $GITHUB_OUTPUT
           fi
 
       - name: Send email
