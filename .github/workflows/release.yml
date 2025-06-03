@@ -38,13 +38,13 @@ jobs:
       - name: Build Android APK (split-per-abi)
         run: flutter build apk --release --split-per-abi
 
-      - name: Build iOS IPA (no code signing)
-        run: |
-          flutter build ios --release --no-codesign
-          cd build/ios/iphoneos
-          mkdir -p Payload
-          cp -r Runner.app Payload/
-          zip -r app.ipa Payload
+     # - name: Build iOS IPA (no code signing)
+      #  run: |
+       #   flutter build ios --release --no-codesign
+        #  cd build/ios/iphoneos
+         # mkdir -p Payload
+          #cp -r Runner.app Payload/
+          #zip -r app.ipa Payload
 
       - name: Upload release artifacts
         uses: ncipollo/release-action@v1
