@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo (needed for git commands)
+      - name: Checkout repo
         uses: actions/checkout@v3
 
       - name: Get commit messages (for push event)
@@ -28,6 +28,18 @@ jobs:
 
       - name: Prepare email content
         id: prepare
+        env:
+          COMMITS: ${{ steps.commits.outputs.commit_messages }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_EVENT_RELEASE_TAG_NAME: ${{ github.event.release.tag_name }}
+          GITHUB_EVENT_RELEASE_NAME: ${{ github.event.release.name }}
+          GITHUB_EVENT_RELEASE_BODY: ${{ github.event.release.body }}
+          GITHUB_EVENT_RELEASE_HTML_URL: ${{ github.event.release.html_url }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_EVENT_BEFORE: ${{ github.event.before }}
+          GITHUB_SHA: ${{ github.sha }}
         run: |
           # Determine recipient based on branch
           if [[ "${GITHUB_REF_NAME}" == "main" ]]; then
@@ -43,13 +55,11 @@ jobs:
           echo "recipient=${RECIPIENT}" >> $GITHUB_OUTPUT
 
           if [[ "${GITHUB_EVENT_NAME}" == "release" ]]; then
-            SUBJECT="🚀 New Release: $GITHUB_EVENT_RELEASE_TAG_NAME"
+            SUBJECT="🚀 New Release: ${GITHUB_EVENT_RELEASE_TAG_NAME}"
 
-            # Prepare URLs for release assets (adjust repo and tag dynamically)
             OWNER_REPO="${GITHUB_REPOSITORY}"
             TAG="${GITHUB_EVENT_RELEASE_TAG_NAME}"
 
-            # Note: These file names must match what you upload in the release action
             APK_URL="https://github.com/${OWNER_REPO}/releases/download/${TAG}/app-arm64-v8a-release.apk"
             IPA_URL="https://github.com/${OWNER_REPO}/releases/download/${TAG}/app.ipa"
 
@@ -75,8 +85,6 @@ ${GITHUB_EVENT_RELEASE_BODY}
 
           elif [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
             SUBJECT="📌 New Push to '${GITHUB_REF_NAME}'"
-
-            COMMITS="${{ steps.commits.outputs.commit_messages }}"
 
             BODY="New commits were pushed to '${GITHUB_REF_NAME}'.
 
