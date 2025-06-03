@@ -15,11 +15,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout repo (needed for git commands)
+        uses: actions/checkout@v3
+
       - name: Get commit messages (for push event)
         if: github.event_name == 'push'
         id: commits
         run: |
-          # Get commit messages between previous and current commit
           echo "commit_messages<<EOF" >> $GITHUB_OUTPUT
           git log --pretty=format:"- %s" ${{ github.event.before }}..${{ github.sha }} >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
@@ -27,62 +29,69 @@ jobs:
       - name: Prepare email content
         id: prepare
         run: |
-          # Set recipient based on branch
-          if [[ "${{ github.ref_name }}" == "main" ]]; then
+          # Determine recipient based on branch
+          if [[ "${GITHUB_REF_NAME}" == "main" ]]; then
             RECIPIENT="sofiashalla96@gmail.com"
-          elif [[ "${{ github.ref_name }}" == "develop" ]]; then
+          elif [[ "${GITHUB_REF_NAME}" == "develop" ]]; then
             RECIPIENT="sofiashalla96@gmail.com"
-          elif [[ "${{ github.ref_name }}" == "master" ]]; then
+          elif [[ "${GITHUB_REF_NAME}" == "master" ]]; then
             RECIPIENT="sofiashalla96@gmail.com"
           else
             RECIPIENT="sofiashalla96@gmail.com"
           fi
 
-          echo "recipient=$RECIPIENT" >> $GITHUB_OUTPUT
+          echo "recipient=${RECIPIENT}" >> $GITHUB_OUTPUT
 
-          if [[ "${{ github.event_name }}" == "release" ]]; then
-            echo "subject=🚀 New Release: ${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+          if [[ "${GITHUB_EVENT_NAME}" == "release" ]]; then
+            SUBJECT="🚀 New Release: $GITHUB_EVENT_RELEASE_TAG_NAME"
 
-            {
-              echo "body<<EOF"
-              echo "A new release was published."
-              echo ""
-              echo "📦 Tag: ${{ github.event.release.tag_name }}"
-              echo "📝 Name: ${{ github.event.release.name }}"
-              echo "👤 Published by: ${{ github.actor }}"
-              echo "🔗 URL: ${{ github.event.release.html_url }}"
-              echo ""
-              echo "🧾 Notes:"
-              echo "${{ github.event.release.body }}"
-              echo ""
-              echo "📎 Attached artifacts are included in this email."
-              echo "EOF"
-            } >> $GITHUB_OUTPUT
+            # Prepare URLs for release assets (adjust repo and tag dynamically)
+            OWNER_REPO="${GITHUB_REPOSITORY}"
+            TAG="${GITHUB_EVENT_RELEASE_TAG_NAME}"
 
-          elif [[ "${{ github.event_name }}" == "push" ]]; then
-            echo "subject=📌 New Push to '${{ github.ref_name }}'" >> $GITHUB_OUTPUT
+            # Note: These file names must match what you upload in the release action
+            APK_URL="https://github.com/${OWNER_REPO}/releases/download/${TAG}/app-arm64-v8a-release.apk"
+            IPA_URL="https://github.com/${OWNER_REPO}/releases/download/${TAG}/app.ipa"
 
-            # Use the commit messages output from previous step
+            BODY="A new release was published.
+
+📦 Tag: ${TAG}
+📝 Name: ${GITHUB_EVENT_RELEASE_NAME}
+👤 Published by: ${GITHUB_ACTOR}
+🔗 URL: ${GITHUB_EVENT_RELEASE_HTML_URL}
+
+🧾 Notes:
+${GITHUB_EVENT_RELEASE_BODY}
+
+📎 Artifacts:
+- Android APK: ${APK_URL}
+- iOS IPA: ${IPA_URL}
+"
+
+            echo "subject=${SUBJECT}" >> $GITHUB_OUTPUT
+            echo "body<<EOF" >> $GITHUB_OUTPUT
+            echo "${BODY}" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+
+          elif [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
+            SUBJECT="📌 New Push to '${GITHUB_REF_NAME}'"
+
             COMMITS="${{ steps.commits.outputs.commit_messages }}"
 
-            {
-              echo "body<<EOF"
-              echo "New commits were pushed to '${{ github.ref_name }}'."
-              echo ""
-              echo "👤 Pushed by: ${{ github.actor }}"
-              echo "🔗 Compare URL: https://github.com/${{ github.repository }}/compare/${{ github.event.before }}...${{ github.sha }}"
-              echo ""
-              echo "📝 Commit messages:"
-              echo "$COMMITS"
-              echo "EOF"
-            } >> $GITHUB_OUTPUT
-          fi
+            BODY="New commits were pushed to '${GITHUB_REF_NAME}'.
 
-      - name: Download release artifacts
-        if: github.event_name == 'release'
-        uses: actions/download-artifact@v3
-        with:
-          path: build/app/outputs/apk/release/*.apk
+👤 Pushed by: ${GITHUB_ACTOR}
+🔗 Compare URL: https://github.com/${GITHUB_REPOSITORY}/compare/${GITHUB_EVENT_BEFORE}...${GITHUB_SHA}
+
+📝 Commit messages:
+${COMMITS}
+"
+
+            echo "subject=${SUBJECT}" >> $GITHUB_OUTPUT
+            echo "body<<EOF" >> $GITHUB_OUTPUT
+            echo "${BODY}" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          fi
 
       - name: Send email
         uses: dawidd6/action-send-mail@v3
@@ -96,4 +105,3 @@ jobs:
           to: ${{ steps.prepare.outputs.recipient }}
           from: ${{ secrets.EMAIL_USERNAME }}
           secure: true
-          attachments: ${{ github.event_name == 'release' && './artifacts/**' || '' }}
