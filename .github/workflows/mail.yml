@@ -1,0 +1,40 @@
+name: Notify by Email
+
+on:
+  release:
+    types: [published]
+  push:
+    branches:
+      - main
+      - develop
+      - master
+
+jobs:
+  notify:
+    name: Send Email Notification
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Prepare email content
+        id: prepare
+        run: |
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            echo "subject=🚀 New Release: ${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+            echo "body=A new release was published.\n\n📦 Tag: ${{ github.event.release.tag_name }}\n📝 Name: ${{ github.event.release.name }}\n🔗 URL: ${{ github.event.release.html_url }}\n🧾 Notes:\n${{ github.event.release.body }}" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.event_name }}" == "push" ]]; then
+            echo "subject=📌 New Push to '${{ github.ref_name }}'" >> $GITHUB_OUTPUT
+            echo "body=New commits were pushed to '${{ github.ref_name }}'\n\n🔗 Compare: https://github.com/${{ github.repository }}/compare/${{ github.event.before }}...${{ github.sha }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Send email
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: ${{ steps.prepare.outputs.subject }}
+          body: ${{ steps.prepare.outputs.body }}
+          to: sofiashalla96@gmail.com
+          from: ${{ secrets.EMAIL_USERNAME }}
+          secure: true
