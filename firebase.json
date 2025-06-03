@@ -1,0 +1,37 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "booknow-f1f4f",
+          "appId": "1:425740148744:android:6ab447aadef4c33dd8f1bd",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "booknow-f1f4f",
+          "configurations": {
+            "android": "1:425740148744:android:6ab447aadef4c33dd8f1bd",
+            "ios": "1:425740148744:ios:0c6e305d731f06c1d8f1bd",
+            "web": "1:425740148744:web:316a8f412f599c9ed8f1bd"
+          }
+        }
+      }
+    }
+  },
+  "hosting": {
+    "public": "build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}
