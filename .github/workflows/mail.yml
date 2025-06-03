@@ -15,9 +15,31 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Get commit messages (for push event)
+        if: github.event_name == 'push'
+        id: commits
+        run: |
+          # Get commit messages between previous and current commit
+          echo "commit_messages<<EOF" >> $GITHUB_OUTPUT
+          git log --pretty=format:"- %s" ${{ github.event.before }}..${{ github.sha }} >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Prepare email content
         id: prepare
         run: |
+          # Set recipient based on branch
+          if [[ "${{ github.ref_name }}" == "main" ]]; then
+            RECIPIENT="sofiashalla96@gmail.com"
+          elif [[ "${{ github.ref_name }}" == "develop" ]]; then
+            RECIPIENT="sofiashalla96@gmail.com"
+          elif [[ "${{ github.ref_name }}" == "master" ]]; then
+            RECIPIENT="sofiashalla96@gmail.com"
+          else
+            RECIPIENT="sofiashalla96@gmail.com"
+          fi
+
+          echo "recipient=$RECIPIENT" >> $GITHUB_OUTPUT
+
           if [[ "${{ github.event_name }}" == "release" ]]; then
             echo "subject=🚀 New Release: ${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
 
@@ -32,11 +54,16 @@ jobs:
               echo ""
               echo "🧾 Notes:"
               echo "${{ github.event.release.body }}"
+              echo ""
+              echo "📎 Attached artifacts are included in this email."
               echo "EOF"
             } >> $GITHUB_OUTPUT
 
           elif [[ "${{ github.event_name }}" == "push" ]]; then
             echo "subject=📌 New Push to '${{ github.ref_name }}'" >> $GITHUB_OUTPUT
+
+            # Use the commit messages output from previous step
+            COMMITS="${{ steps.commits.outputs.commit_messages }}"
 
             {
               echo "body<<EOF"
@@ -44,9 +71,18 @@ jobs:
               echo ""
               echo "👤 Pushed by: ${{ github.actor }}"
               echo "🔗 Compare URL: https://github.com/${{ github.repository }}/compare/${{ github.event.before }}...${{ github.sha }}"
+              echo ""
+              echo "📝 Commit messages:"
+              echo "$COMMITS"
               echo "EOF"
             } >> $GITHUB_OUTPUT
           fi
+
+      - name: Download release artifacts
+        if: github.event_name == 'release'
+        uses: actions/download-artifact@v3
+        with:
+          path: ./artifacts
 
       - name: Send email
         uses: dawidd6/action-send-mail@v3
@@ -57,6 +93,7 @@ jobs:
           password: ${{ secrets.EMAIL_PASSWORD }}
           subject: ${{ steps.prepare.outputs.subject }}
           body: ${{ steps.prepare.outputs.body }}
-          to: sofiashalla96@gmail.com
+          to: ${{ steps.prepare.outputs.recipient }}
           from: ${{ secrets.EMAIL_USERNAME }}
           secure: true
+          attachments: ${{ github.event_name == 'release' && './artifacts/**' || '' }}
