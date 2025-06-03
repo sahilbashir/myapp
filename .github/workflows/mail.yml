@@ -15,90 +15,37 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
-
-      - name: Get commit messages (for push event)
-        if: github.event_name == 'push'
-        id: commits
-        run: |
-          echo "commit_messages<<EOF" >> $GITHUB_OUTPUT
-          git log --pretty=format:"- %s" ${{ github.event.before }}..${{ github.sha }} >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
       - name: Prepare email content
         id: prepare
-        env:
-          COMMITS: ${{ steps.commits.outputs.commit_messages }}
-          GITHUB_EVENT_NAME: ${{ github.event_name }}
-          GITHUB_REF_NAME: ${{ github.ref_name }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          GITHUB_EVENT_RELEASE_TAG_NAME: ${{ github.event.release.tag_name }}
-          GITHUB_EVENT_RELEASE_NAME: ${{ github.event.release.name }}
-          GITHUB_EVENT_RELEASE_BODY: ${{ github.event.release.body }}
-          GITHUB_EVENT_RELEASE_HTML_URL: ${{ github.event.release.html_url }}
-          GITHUB_ACTOR: ${{ github.actor }}
-          GITHUB_EVENT_BEFORE: ${{ github.event.before }}
-          GITHUB_SHA: ${{ github.sha }}
         run: |
-          # Determine recipient based on branch
-          if [[ "${GITHUB_REF_NAME}" == "main" ]]; then
-            RECIPIENT="sofiashalla96@gmail.com"
-          elif [[ "${GITHUB_REF_NAME}" == "develop" ]]; then
-            RECIPIENT="sofiashalla96@gmail.com"
-          elif [[ "${GITHUB_REF_NAME}" == "master" ]]; then
-            RECIPIENT="sofiashalla96@gmail.com"
-          else
-            RECIPIENT="sofiashalla96@gmail.com"
-          fi
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            echo "subject=🚀 New Release: ${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
 
-          echo "recipient=${RECIPIENT}" >> $GITHUB_OUTPUT
+            {
+              echo "body<<EOF"
+              echo "A new release was published."
+              echo ""
+              echo "📦 Tag: ${{ github.event.release.tag_name }}"
+              echo "📝 Name: ${{ github.event.release.name }}"
+              echo "👤 Published by: ${{ github.actor }}"
+              echo "🔗 URL: ${{ github.event.release.html_url }}"
+              echo ""
+              echo "🧾 Notes:"
+              echo "${{ github.event.release.body }}"
+              echo "EOF"
+            } >> $GITHUB_OUTPUT
 
-          if [[ "${GITHUB_EVENT_NAME}" == "release" ]]; then
-            SUBJECT="🚀 New Release: ${GITHUB_EVENT_RELEASE_TAG_NAME}"
+          elif [[ "${{ github.event_name }}" == "push" ]]; then
+            echo "subject=📌 New Push to '${{ github.ref_name }}'" >> $GITHUB_OUTPUT
 
-            OWNER_REPO="${GITHUB_REPOSITORY}"
-            TAG="${GITHUB_EVENT_RELEASE_TAG_NAME}"
-
-            APK_URL="https://github.com/${OWNER_REPO}/releases/download/${TAG}/app-arm64-v8a-release.apk"
-            IPA_URL="https://github.com/${OWNER_REPO}/releases/download/${TAG}/app.ipa"
-
-            BODY="A new release was published.
-
-📦 Tag: ${TAG}
-📝 Name: ${GITHUB_EVENT_RELEASE_NAME}
-👤 Published by: ${GITHUB_ACTOR}
-🔗 URL: ${GITHUB_EVENT_RELEASE_HTML_URL}
-
-🧾 Notes:
-${GITHUB_EVENT_RELEASE_BODY}
-
-📎 Artifacts:
-- Android APK: ${APK_URL}
-- iOS IPA: ${IPA_URL}
-"
-
-            echo "subject=${SUBJECT}" >> $GITHUB_OUTPUT
-            echo "body<<EOF" >> $GITHUB_OUTPUT
-            echo "${BODY}" >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
-
-          elif [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
-            SUBJECT="📌 New Push to '${GITHUB_REF_NAME}'"
-
-            BODY="New commits were pushed to '${GITHUB_REF_NAME}'.
-
-👤 Pushed by: ${GITHUB_ACTOR}
-🔗 Compare URL: https://github.com/${GITHUB_REPOSITORY}/compare/${GITHUB_EVENT_BEFORE}...${GITHUB_SHA}
-
-📝 Commit messages:
-${COMMITS}
-"
-
-            echo "subject=${SUBJECT}" >> $GITHUB_OUTPUT
-            echo "body<<EOF" >> $GITHUB_OUTPUT
-            echo "${BODY}" >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
+            {
+              echo "body<<EOF"
+              echo "New commits were pushed to '${{ github.ref_name }}'."
+              echo ""
+              echo "👤 Pushed by: ${{ github.actor }}"
+              echo "🔗 Compare URL: https://github.com/${{ github.repository }}/compare/${{ github.event.before }}...${{ github.sha }}"
+              echo "EOF"
+            } >> $GITHUB_OUTPUT
           fi
 
       - name: Send email
@@ -110,6 +57,6 @@ ${COMMITS}
           password: ${{ secrets.EMAIL_PASSWORD }}
           subject: ${{ steps.prepare.outputs.subject }}
           body: ${{ steps.prepare.outputs.body }}
-          to: ${{ steps.prepare.outputs.recipient }}
+          to: sofiashalla96@gmail.com
           from: ${{ secrets.EMAIL_USERNAME }}
           secure: true
