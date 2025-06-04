@@ -177,9 +177,9 @@ Widget featureIcons() {
   return Row(
     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
     children: [
-      featureIcon(Icons.local_gas_station, 'Diesel', 'Common Rail'),
-      featureIcon(Icons.speed, 'Acceleration', '0–100 km/s'),
-      featureIcon(Icons.ac_unit, 'Cold', 'Temp Control'),
+      featureIcon(Icons.local_gas_station, 'Fuel Type', 'Petrol'),
+      featureIcon(Icons.speed, 'Top Speed', '220km/h'),
+      featureIcon(Icons.ac_unit, 'Temp Control', 'Included'),
     ],
   );
 }

@@ -1,7 +1,7 @@
 import 'package:myapp/data/models/car.dart';
 import 'package:myapp/presentation/pages/maps_detail_page.dart';
 import 'package:myapp/presentation/widgets/car_card.dart';
-import 'package:myapp/presentation/widgets/more_card.dart';
+//import 'package:myapp/presentation/widgets/more_card.dart';
 //import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
