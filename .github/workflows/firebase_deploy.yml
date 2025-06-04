@@ -16,7 +16,7 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: beta  # correct indentation here
+          channel: beta
 
       - name: Show Flutter version
         run: flutter --version
@@ -34,3 +34,29 @@ jobs:
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
         run: firebase deploy --only hosting
+
+  notify:
+    needs: build-and-deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Send deployment notification email
+        uses: mikepenz/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "✅ Flutter App Deployed to Firebase Hosting"
+          body: |
+            Hello,
+
+            Your Flutter Web app has been successfully deployed to Firebase Hosting.
+
+            🔗 URL: https://booknow-f1f4f.web.app  
+            👤 Deployed by: ${{ github.actor }}
+
+            Regards,  
+            GitHub Actions
+          to: sofiashalla96@gmail.com
+          from: ${{ secrets.EMAIL_USERNAME }}
