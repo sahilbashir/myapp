@@ -36,49 +36,52 @@ jobs:
         run: firebase deploy --only hosting
 
   notify:
-  needs: build-and-deploy
-  runs-on: ubuntu-latest
+    needs: build-and-deploy
+    runs-on: ubuntu-latest
 
-  steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Important to fetch full history for git log
 
-    - name: Extract commit messages
-      id: extract_commits
-      run: |
-        echo "LAST_COMMIT_MESSAGE=$(git log -1 --pretty=format:'%s')" >> $GITHUB_ENV
+      - name: Extract commit messages
+        id: extract_commits
+        run: |
+          # Get latest commit message
+          echo "LAST_COMMIT_MESSAGE=$(git log -1 --pretty=format:'%s')" >> $GITHUB_ENV
 
-        echo "<table><tr><th>Commit ID</th><th>Message</th></tr>" > commit_table.html
-        git log --pretty=format:'<tr><td>%h</td><td>%s</td></tr>' ${{ github.event.before }}..${{ github.sha }} >> commit_table.html
-        echo "</table>" >> commit_table.html
+          # Build HTML commit table
+          echo "<table><tr><th>Commit ID</th><th>Message</th></tr>" > commit_table.html
+          git log --pretty=format:'<tr><td>%h</td><td>%s</td></tr>' ${{ github.event.before }}..${{ github.sha }} >> commit_table.html
+          echo "</table>" >> commit_table.html
 
-        echo "COMMITS_TABLE<<EOF" >> $GITHUB_ENV
-        cat commit_table.html >> $GITHUB_ENV
-        echo "EOF" >> $GITHUB_ENV
+          # Save table to environment variable safely
+          echo "COMMITS_TABLE<<EOF" >> $GITHUB_ENV
+          cat commit_table.html >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
-    - name: Send deployment notification email
-      uses: dawidd6/action-send-mail@v3
-      with:
-        server_address: smtp.gmail.com
-        server_port: 587
-        username: ${{ secrets.EMAIL_USERNAME }}
-        password: ${{ secrets.EMAIL_PASSWORD }}
-        subject: "✅ Flutter App Deployed to Firebase Hosting"
-        body: |
-          Hello,
+      - name: Send deployment notification email
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "✅ Flutter App Deployed to Firebase Hosting"
+          body: |
+            Hello,
 
-          Your Flutter Web app has been successfully deployed to Firebase Hosting.
+            Your Flutter Web app has been successfully deployed to Firebase Hosting.
 
-          🔗 URL: https://booknow-f1f4f.web.app  
-          👤 Deployed by: ${{ github.actor }}
-          📝 Latest Commit Message: ${{ env.LAST_COMMIT_MESSAGE }}
+            🔗 URL: https://booknow-f1f4f.web.app  
+            👤 Deployed by: ${{ github.actor }}
+            📝 New Feature Added: ${{ env.LAST_COMMIT_MESSAGE }}
 
-          🗂️ All commits in this push:
-          ${{ env.COMMITS_TABLE }}
+            🗂️ Old Features Present:
+            ${{ env.COMMITS_TABLE }}
 
-          Regards,  
-          GitHub Actions
-        to: sofiashalla96@gmail.com
-        from: ${{ secrets.EMAIL_USERNAME }}
+            Regards,  
+            GitHub Actions
+          to: sofiashalla96@gmail.com
+          from: ${{ secrets.EMAIL_USERNAME }}
