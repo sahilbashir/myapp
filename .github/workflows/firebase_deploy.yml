@@ -36,45 +36,49 @@ jobs:
         run: firebase deploy --only hosting
 
   notify:
-    needs: build-and-deploy
-    runs-on: ubuntu-latest
+  needs: build-and-deploy
+  runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
 
-      - name: Get commit messages
-        id: commit_data
-        run: |
-          echo "LAST_COMMIT_MESSAGE=$(git log -1 --pretty=format:'%s')" >> $GITHUB_ENV
+    - name: Extract commit messages
+      id: extract_commits
+      run: |
+        echo "LAST_COMMIT_MESSAGE=$(git log -1 --pretty=format:'%s')" >> $GITHUB_ENV
 
-          echo "ALL_COMMITS_TABLE=<table><tr><th>Commit ID</th><th>Message</th></tr>" >> $GITHUB_ENV
-          git log --pretty=format:'<tr><td>%h</td><td>%s</td></tr>' ${{ github.event.before }}..${{ github.sha }} >> $GITHUB_ENV
-          echo "</table>" >> $GITHUB_ENV
+        echo "<table><tr><th>Commit ID</th><th>Message</th></tr>" > commit_table.html
+        git log --pretty=format:'<tr><td>%h</td><td>%s</td></tr>' ${{ github.event.before }}..${{ github.sha }} >> commit_table.html
+        echo "</table>" >> commit_table.html
 
-      - name: Send deployment notification email
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: smtp.gmail.com
-          server_port: 587
-          username: ${{ secrets.EMAIL_USERNAME }}
-          password: ${{ secrets.EMAIL_PASSWORD }}
-          subject: "✅ Flutter App Deployed to Firebase Hosting"
-          body: |
-            Hello,
+        echo "COMMITS_TABLE<<EOF" >> $GITHUB_ENV
+        cat commit_table.html >> $GITHUB_ENV
+        echo "EOF" >> $GITHUB_ENV
 
-            Your Flutter Web app has been successfully deployed to Firebase Hosting.
+    - name: Send deployment notification email
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: smtp.gmail.com
+        server_port: 587
+        username: ${{ secrets.EMAIL_USERNAME }}
+        password: ${{ secrets.EMAIL_PASSWORD }}
+        subject: "✅ Flutter App Deployed to Firebase Hosting"
+        body: |
+          Hello,
 
-            🔗 URL: https://booknow-f1f4f.web.app  
-            👤 Deployed by: ${{ github.actor }}
-            📝 New Feature Added : ${{ env.LAST_COMMIT_MESSAGE }}
+          Your Flutter Web app has been successfully deployed to Firebase Hosting.
 
-            🗂️ Already Present Features:
-            ${{ env.ALL_COMMITS_TABLE }}
+          🔗 URL: https://booknow-f1f4f.web.app  
+          👤 Deployed by: ${{ github.actor }}
+          📝 Latest Commit Message: ${{ env.LAST_COMMIT_MESSAGE }}
 
-            Regards,  
-            GitHub Actions
-          to: sofiashalla96@gmail.com
-          from: ${{ secrets.EMAIL_USERNAME }}
+          🗂️ All commits in this push:
+          ${{ env.COMMITS_TABLE }}
+
+          Regards,  
+          GitHub Actions
+        to: sofiashalla96@gmail.com
+        from: ${{ secrets.EMAIL_USERNAME }}
