@@ -40,6 +40,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Get commit messages
+        id: commit_data
+        run: |
+          echo "LAST_COMMIT_MESSAGE=$(git log -1 --pretty=format:'%s')" >> $GITHUB_ENV
+
+          echo "ALL_COMMITS_TABLE=<table><tr><th>Commit ID</th><th>Message</th></tr>" >> $GITHUB_ENV
+          git log --pretty=format:'<tr><td>%h</td><td>%s</td></tr>' ${{ github.event.before }}..${{ github.sha }} >> $GITHUB_ENV
+          echo "</table>" >> $GITHUB_ENV
+
       - name: Send deployment notification email
         uses: dawidd6/action-send-mail@v3
         with:
@@ -55,6 +67,10 @@ jobs:
 
             🔗 URL: https://booknow-f1f4f.web.app  
             👤 Deployed by: ${{ github.actor }}
+            📝 New Feature Added : ${{ env.LAST_COMMIT_MESSAGE }}
+
+            🗂️ Already Present Features:
+            ${{ env.ALL_COMMITS_TABLE }}
 
             Regards,  
             GitHub Actions
