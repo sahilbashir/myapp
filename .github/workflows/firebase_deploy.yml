@@ -69,20 +69,19 @@ jobs:
           username: ${{ secrets.EMAIL_USERNAME }}
           password: ${{ secrets.EMAIL_PASSWORD }}
           subject: "✅ Flutter App Deployed to Firebase Hosting"
-          content_type: text/html
           body: |
-           <p>Hello,</p>
+            Hello,
 
-      <p>Your Flutter Web app has been successfully deployed to Firebase Hosting.</p>
+            Your Flutter Web app has been successfully deployed to Firebase Hosting.
 
-      <p>🔗 <strong>URL:</strong> <a href="https://booknow-f1f4f.web.app">https://booknow-f1f4f.web.app</a><br/>
-      👤 <strong>Deployed by:</strong> ${{ github.actor }}<br/>
-      📝 <strong>New Feature Added:</strong> ${{ env.LAST_COMMIT_MESSAGE }}</p>
+            🔗 URL: https://booknow-f1f4f.web.app  
+            👤 Deployed by: ${{ github.actor }}
+            📝 Latest Commit Message: ${{ env.LAST_COMMIT_MESSAGE }}
 
-      <p>🗂️ <strong>Old Features Present:</strong></p>
-      ${{ env.COMMITS_TABLE }}
+            🗂️ All commits in this push:
+            ${{ env.COMMITS_TABLE }}
 
-      <p>Regards,<br/>
-      GitHub Actions</p>
+            Regards,  
+            GitHub Actions
           to: sofiashalla96@gmail.com
           from: ${{ secrets.EMAIL_USERNAME }}
