@@ -3,8 +3,8 @@ FROM ghcr.io/cirruslabs/flutter:3.32.4 AS build
 
 
 # Create a non-root user
-RUN adduser -D flutteruser
-USER flutteruser
+#RUN adduser -D flutteruser
+#USER flutteruser
 
 # Set the working directory in the container
 WORKDIR /app
