@@ -1,0 +1,8 @@
+replicaCount: 2
+image:
+  repository: ghcr.io/sahilbashir/booknow
+  pullPolicy: Always
+  tag: "latest" # This will be overridden by the workflow
+service:
+  type: LoadBalancer
+  port: 80

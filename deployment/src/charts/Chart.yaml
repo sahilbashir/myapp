@@ -1,0 +1,6 @@
+apiVersion: v2
+name: booknow
+description: Helm chart for BookNow Flutter Web App
+type: application
+version: 0.1.0
+appVersion: "latest"
