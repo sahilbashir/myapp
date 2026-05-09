@@ -33,5 +33,5 @@ jobs:
           VERSION="0.1.${{ github.event.workflow_run.run_number }}"
           IMAGE_TAG="sha-${{ github.event.workflow_run.head_sha }}"
           
-          helm package charts/booknow --version $VERSION --app-version $IMAGE_TAG
+          helm package deployment/src/charts --version $VERSION --app-version $IMAGE_TAG
           helm push booknow-$VERSION.tgz oci://ghcr.io/${{ github.repository_owner }}/charts
