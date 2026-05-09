@@ -2,7 +2,7 @@ replicaCount: 2
 image:
   repository: sahilbashir/booknow
   pullPolicy: Always
-  tag: "latest" # This will be overridden by the workflow
+  tag: "v1.0.28" # This will be overridden by the workflow
 service:
   type: LoadBalancer
   port: 80
