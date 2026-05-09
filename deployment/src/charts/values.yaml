@@ -1,6 +1,6 @@
 replicaCount: 2
 image:
-  repository: sahilbashir/booknow
+  repository: sahilbashir/book-now
   pullPolicy: Always
   tag: "v1.0.28" # This will be overridden by the workflow
 service:
